@@ -11,7 +11,7 @@ def execute(prog: str) -> None:
     print(*prog.tree, sep=os.linesep)
     print()
 
-    '''
+
     print('semantic_check:')
     try:
         scope = semantic.prepare_global_scope()
@@ -21,4 +21,3 @@ def execute(prog: str) -> None:
         print('Ошибка: {}'.format(e.message))
         return
     print()
-    '''

@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from contextlib import suppress
 from typing import Optional, Union, Tuple, Callable, List
 
-from .semantic import TYPE_CONVERTIBILITY, BIN_OP_TYPE_COMPATIBILITY, BinOp, AssignOp, \
-    TypeDesc, IdentDesc, ScopeType, IdentScope, SemanticException
+from .semantic import TYPE_CONVERTIBILITY, BIN_OP_TYPE_COMPATIBILITY, ASSIGN_OP_TYPE_COMPATIBILITY, BinOp, AssignOp, \
+    TypeDesc, IdentDesc, ScopeType, IdentScope, SemanticException, BaseType
 
 
 class AstNode(ABC):
@@ -129,15 +129,20 @@ class LiteralNode(ExprNode):
     def semantic_check(self, scope: IdentScope) -> None:
         if isinstance(self.value, bool):
             self.node_type = TypeDesc.BOOL
-        # проверка должна быть позже bool, т.к. bool наследник от int
+        elif isinstance(self.value, float):
+            if self.literal[-1].lower() in ('f', 'F'):
+                self.node_type = TypeDesc.FLOAT
+            else:
+                self.node_type = TypeDesc.DOUBLE
         elif isinstance(self.value, int):
             self.node_type = TypeDesc.INT
-        elif isinstance(self.value, float):
-            self.node_type = TypeDesc.FLOAT
-        elif isinstance(self.value, str):
+        elif  len(self.value) == 1 and self.to_str().startswith('\'') and self.to_str().endswith('\''):
+            self.node_type = TypeDesc.CHAR
+        elif isinstance(self.value, str) and self.to_str().startswith('"') and self.to_str().endswith('"'):
             self.node_type = TypeDesc.STR
-        elif isinstance(self.value, double):
-            self.node_type = TypeDesc.DOUBLE
+
+
+
         else:
             self.semantic_error('Неизвестный тип {} для {}'.format(type(self.value), self.value))
 
@@ -178,7 +183,7 @@ class TypeNode(IdentNode):
         return self.to_str()
 
     def semantic_check(self, scope: IdentScope) -> None:
-        if self.type is None:
+        if self.type is None or not BaseType.is_enum_value(str(self.type)):
             self.semantic_error('Неизвестный тип {}'.format(self.name))
 
 
@@ -357,9 +362,26 @@ class AssignNode(ExprNode):
     def semantic_check(self, scope: IdentScope) -> None:
         self.var.semantic_check(scope)
         self.val.semantic_check(scope)
-        self.val = type_convert(self.val, self.var.node_type, self, 'присваиваемое значение')
-        self.node_type = self.var.node_type
 
+
+        if self.val.node_type.is_simple or self.var.node_type.is_simple:
+            compatibility = ASSIGN_OP_TYPE_COMPATIBILITY[self.op]
+            args_types = (self.val.node_type.base_type, self.var.node_type.base_type)
+            if args_types in compatibility:
+                self.node_type = TypeDesc.from_base_type(compatibility[args_types])
+                return
+
+            if self.val.node_type.base_type in TYPE_CONVERTIBILITY:
+                for val_type in TYPE_CONVERTIBILITY[self.val.node_type.base_type]:
+                    args_types = (self.var.node_type.base_type, val_type)
+                    if args_types in compatibility:
+                        self.val = type_convert(self.val, TypeDesc.from_base_type(val_type))
+                        self.node_type = TypeDesc.from_base_type(compatibility[args_types])
+                        return
+
+        self.semantic_error("Оператор {} не применим к типам ({}, {})".format(
+            self.op, self.var.node_type, self.val.node_type
+        ))
 
 class VarsNode(StmtNode):
     """Класс для представления в AST-дереве объявления переменнных
@@ -668,3 +690,4 @@ class StmtListNode(StmtNode):
 
 EMPTY_STMT = StmtListNode()
 EMPTY_IDENT = IdentDesc('', TypeDesc.VOID)
+

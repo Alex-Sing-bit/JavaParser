@@ -67,7 +67,7 @@ def _make_parser():
 
     mult = pp.Group(group + pp.ZeroOrMore((MUL | DIV | MOD) + group)).setName('bin_op')
     add << pp.Group(mult + pp.ZeroOrMore((ADD | SUB) + mult)).setName('bin_op')
-    compare1 = pp.Group(add + pp.Optional((GE | LE | GT | LT) + add)).setName('bin_op')  # GE и LE первыми, т.к. приоритетный выбор
+    compare1 = pp.Group(add + pp.Optional((GE | LE | GT | LT) + add)).setName('bin_op')
     compare2 = pp.Group(compare1 + pp.Optional((EQUALS | NEQUALS) + compare1)).setName('bin_op')
     logical_and = pp.Group(compare2 + pp.ZeroOrMore(AND + compare2)).setName('bin_op')
     logical_or = pp.Group(logical_and + pp.ZeroOrMore(OR + logical_and)).setName('bin_op')
@@ -105,7 +105,12 @@ def _make_parser():
     params = pp.Optional(param + pp.ZeroOrMore(COMMA + param))
     func = type_ + ident + LPAR + params + RPAR + LBRACE + stmt_list + RBRACE
 
+    break_ = BREAK.suppress()
+    continue_ = CONTINUE.suppress()
+
     stmt << (
+        break_ |
+        continue_ |
         if_ |
         for_ |
         while_ |

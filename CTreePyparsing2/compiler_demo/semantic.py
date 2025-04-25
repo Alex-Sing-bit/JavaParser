@@ -46,16 +46,20 @@ class BaseType(Enum):
     VOID = 'void'
     INT = 'int'
     FLOAT = 'float'
-    BOOL = 'bool'
-    STR = 'string'
+    BOOL = 'boolean'
+    STR = 'String'
     DOUBLE = 'double'
+    CHAR = 'char'
 
     def __str__(self):
         return self.value
 
+    def is_enum_value(value: str) -> bool:
+        return any(value == item.value for item in BaseType)
 
-VOID, INT, FLOAT, BOOL, STR, DOUBLE = (BaseType.VOID, BaseType.INT, BaseType.FLOAT, BaseType.BOOL,
-                                       BaseType.STR, BaseType.DOUBLE)
+
+VOID, INT, FLOAT, BOOL, STR, DOUBLE, CHAR = (BaseType.VOID, BaseType.INT, BaseType.FLOAT, BaseType.BOOL,
+                                       BaseType.STR, BaseType.DOUBLE, BaseType.CHAR)
 
 
 class TypeDesc:
@@ -71,6 +75,7 @@ class TypeDesc:
     BOOL: 'TypeDesc'
     STR: 'TypeDesc'
     DOUBLE: 'TypeDesc'
+    CHAR: 'TypeDesc'
 
     def __init__(self, base_type_: Optional[BaseType] = None,
                  return_type: Optional['TypeDesc'] = None, params: Optional[Tuple['TypeDesc']] = None) -> None:
@@ -251,9 +256,11 @@ class SemanticException(Exception):
 
 
 TYPE_CONVERTIBILITY = {
-    INT: (FLOAT, BOOL, STR),
-    FLOAT: (STR,),
-    BOOL: (STR,)
+    INT: (FLOAT, STR, DOUBLE, CHAR),
+    FLOAT: (STR, INT),
+    BOOL: (),
+    DOUBLE: (STR, FLOAT, INT),
+    CHAR: (STR, INT)
 }
 
 
@@ -267,54 +274,82 @@ BIN_OP_TYPE_COMPATIBILITY = {
     BinOp.ADD: {
         (INT, INT): INT,
         (FLOAT, FLOAT): FLOAT,
-        (STR, STR): STR
+        (DOUBLE, DOUBLE): DOUBLE,
+        (STR, STR): STR,
+        (CHAR, CHAR): CHAR
     },
     BinOp.SUB: {
         (INT, INT): INT,
-        (FLOAT, FLOAT): FLOAT
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (CHAR, CHAR): CHAR
     },
     BinOp.MUL: {
         (INT, INT): INT,
-        (FLOAT, FLOAT): FLOAT
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (CHAR, CHAR): CHAR
     },
     BinOp.DIV: {
         (INT, INT): INT,
-        (FLOAT, FLOAT): FLOAT
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (CHAR, CHAR): CHAR
     },
     BinOp.MOD: {
         (INT, INT): INT,
-        (FLOAT, FLOAT): FLOAT
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (CHAR, CHAR): CHAR
     },
+
 
     BinOp.GT: {
         (INT, INT): BOOL,
         (FLOAT, FLOAT): BOOL,
+        (BOOL, BOOL): BOOL,
+        (DOUBLE, DOUBLE): BOOL,
         (STR, STR): BOOL,
+        (CHAR, CHAR): BOOL
     },
     BinOp.LT: {
         (INT, INT): BOOL,
         (FLOAT, FLOAT): BOOL,
+        (BOOL, BOOL): BOOL,
+        (DOUBLE, DOUBLE): BOOL,
         (STR, STR): BOOL,
+        (CHAR, CHAR): BOOL
     },
     BinOp.GE: {
         (INT, INT): BOOL,
         (FLOAT, FLOAT): BOOL,
+        (BOOL, BOOL): BOOL,
+        (DOUBLE, DOUBLE): BOOL,
         (STR, STR): BOOL,
+        (CHAR, CHAR): BOOL
     },
     BinOp.LE: {
         (INT, INT): BOOL,
         (FLOAT, FLOAT): BOOL,
+        (BOOL, BOOL): BOOL,
+        (DOUBLE, DOUBLE): BOOL,
         (STR, STR): BOOL,
+        (CHAR, CHAR): BOOL
     },
     BinOp.EQUALS: {
         (INT, INT): BOOL,
         (FLOAT, FLOAT): BOOL,
+        (BOOL, BOOL): BOOL,
+        (DOUBLE, DOUBLE): BOOL,
         (STR, STR): BOOL,
+        (CHAR, CHAR): BOOL
     },
     BinOp.NEQUALS: {
         (INT, INT): BOOL,
         (FLOAT, FLOAT): BOOL,
+        (DOUBLE, DOUBLE): BOOL,
         (STR, STR): BOOL,
+        (CHAR, CHAR): BOOL
     },
 
     BinOp.BIT_AND: {
@@ -333,14 +368,57 @@ BIN_OP_TYPE_COMPATIBILITY = {
 }
 
 
+
+
 BUILT_IN_OBJECTS = '''
-    string read() { }
-    void print(string p0) { }
-    void println(string p0) { }
-    int to_int(string p0) { }
-    int to_float(string p0) { }
+    String read() { }
+    void print(String p0) { }
+    void println(String p0) { }
+    int to_int(String p0) { }
+    int to_float(String p0) { }
 '''
 
+ASSIGN_OP_TYPE_COMPATIBILITY = {
+    AssignOp.ASSIGN: {
+        (INT, INT): INT,
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (STR, STR): STR,
+        (CHAR, CHAR): CHAR
+    },
+    AssignOp.ASSIGN_ADD: {
+        (INT, INT): INT,
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (STR, STR): STR,
+        (CHAR, CHAR): CHAR
+    },
+    AssignOp.ASSIGN_SUB: {
+        (INT, INT): INT,
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (CHAR, CHAR): CHAR
+    },
+    AssignOp.ASSIGN_MUL: {
+        (INT, INT): INT,
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (CHAR, CHAR): CHAR
+    },
+    AssignOp.ASSIGN_DIV: {
+        (INT, INT): INT,
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (CHAR, CHAR): CHAR
+    },
+    AssignOp.ASSIGN_MOD: {
+        (INT, INT): INT,
+        (FLOAT, FLOAT): FLOAT,
+        (DOUBLE, DOUBLE): DOUBLE,
+        (CHAR, CHAR): CHAR
+    },
+
+}
 
 def prepare_global_scope() -> IdentScope:
     from .parser import parse
