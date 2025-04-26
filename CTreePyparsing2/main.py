@@ -80,7 +80,7 @@ def main() -> None:
          
         '''
     prog7 = ''' 
-            int input_int(string name) {
+            int input_int(String name) {
                 if (name != "") {
                     name += 1;
                     name += 'c';
@@ -109,7 +109,7 @@ def main() -> None:
               }
                     '''
 
-    program.execute(prog11)
+    program.execute(prog8)
 
 
 if __name__ == "__main__":

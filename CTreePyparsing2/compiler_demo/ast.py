@@ -643,11 +643,9 @@ class FuncNode(StmtNode):
         self.type.semantic_check(scope)
         scope = IdentScope(scope)
 
-        # временно хоть какое-то значение, чтобы при добавлении параметров находить scope функции
         scope.func = EMPTY_IDENT
         params = []
         for param in self.params:
-            # при проверке параметров происходит их добавление в scope
             param.semantic_check(scope)
             params.append(param.type.type)
 
